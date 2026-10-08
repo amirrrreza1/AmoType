@@ -1,0 +1,81 @@
+{
+  "name": "@amirrrreza1/amotype",
+  "version": "0.1.0",
+  "description": "An educational static type checker for a documented subset of JavaScript.",
+  "homepage": "https://github.com/amirrrreza1/LanguageDesign#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amirrrreza1/LanguageDesign.git"
+  },
+  "bugs": {
+    "url": "https://github.com/amirrrreza1/LanguageDesign/issues"
+  },
+  "contributors": [
+    {
+      "name": "Amirreza"
+    },
+    {
+      "name": "Mobina"
+    }
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "amotype": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE",
+    "SCOPE_ASSESSMENT.md",
+    "docs/TYPE_SYSTEM.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "javascript",
+    "type-checker",
+    "static-analysis",
+    "education"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "pnpm run build && tsx --test tests/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm test",
+    "verify:package": "node scripts/verify-package.mjs",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "acorn": "^8.18.0",
+    "@types/estree": "^1.0.9"
+  },
+  "packageManager": "pnpm@11.9.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.4",
+    "eslint": "^10.11.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0"
+  }
+}
