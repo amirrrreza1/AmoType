@@ -4,7 +4,7 @@ A custom educational static checker for a documented JavaScript subset. The pars
 
 Created by **Amirreza & Mobina** for **Programming Language Design**.
 
-**Version 0.1.0 is published on npm; the local 0.2.0 adds arrays and objects and has not been published.** The package name is `@amirrrreza1/amotype`; the CLI command is `amotype`. This version exports ESM and requires Node.js 22+ for its CLI.
+**Version 0.2.0 adds array and object checking, nested collection JSDoc contracts, and collection diagnostics.** The package name is `@amirrrreza1/amotype`; the CLI command is `amotype`. This version exports ESM and requires Node.js 22+ for its CLI.
 
 ## Installation
 
@@ -14,9 +14,9 @@ Install the published version:
 npm install @amirrrreza1/amotype
 ```
 
-Published 0.1.0 consumers using TypeScript with `skipLibCheck: false` also need `pnpm add -D @types/estree`. The standalone source now includes those types in its package dependencies; that metadata correction is awaiting a future patch release. JavaScript API and CLI usage are unaffected.
+Version 0.2.0 includes the `@types/estree` dependency required by its exported declarations, including for TypeScript consumers using `skipLibCheck: false`. Older 0.1.0 consumers need to install those types separately or upgrade.
 
-Or use pnpm: `pnpm add @amirrrreza1/amotype@0.1.0`.
+Or use pnpm: `pnpm add @amirrrreza1/amotype@0.2.0`.
 
 ## Develop the standalone package
 

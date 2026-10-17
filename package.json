@@ -28,7 +28,7 @@
     }
   },
   "bin": {
-    "amotype": "./dist/cli.js"
+    "amotype": "dist/cli.js"
   },
   "files": [
     "dist",

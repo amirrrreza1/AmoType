@@ -1,6 +1,6 @@
 # AmoType student scope assessment
 
-The local 0.2.0 extends the educational checker with homogeneous arrays and fixed object shapes. The published 0.1.0 remains the original primitive/function release. This update has not been published to npm.
+Version 0.2.0 extends the educational checker with homogeneous arrays and fixed object shapes. Version 0.1.0 was the original primitive/function release.
 
 ## Implemented behavior
 
