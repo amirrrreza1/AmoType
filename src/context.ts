@@ -14,6 +14,7 @@ export class AnalysisContext {
   readonly scopes: Scope[] = [];
   analysisComplete = true;
   functionScope?: Scope;
+  collectionWrites = 0;
 
   constructor(readonly mode: 'strict' | 'permissive') {}
 
@@ -43,7 +44,7 @@ export class AnalysisContext {
       code: 'I101',
       severity: 'info',
       message,
-      suggestion: 'Add primitive JSDoc annotations or simplify the expression.',
+      suggestion: 'Add supported JSDoc annotations or simplify the expression.',
     });
   }
 

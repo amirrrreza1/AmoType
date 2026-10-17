@@ -4,7 +4,7 @@ A custom educational static checker for a documented JavaScript subset. The pars
 
 Created by **Amirreza & Mobina** for **Programming Language Design**.
 
-**Version 0.1.0 is published on npm.** The package name is `@amirrrreza1/amotype`; the CLI command is `amotype`. This version exports ESM and requires Node.js 22+ for its CLI.
+**Version 0.1.0 is published on npm; the local 0.2.0 adds arrays and objects and has not been published.** The package name is `@amirrrreza1/amotype`; the CLI command is `amotype`. This version exports ESM and requires Node.js 22+ for its CLI.
 
 ## Installation
 
@@ -32,7 +32,7 @@ pnpm pack
 
 `check` runs type checking, lint, a build, and the source/CLI tests. `verify:package` packs this folder, installs the archive in a separate consumer, and checks its ESM API, CLI, and strict TypeScript declarations in a temporary consumer outside this project. Build with `npm run build` if using npm.
 
-The playground installs the published `0.1.0` version. Editing this source does not change the playground automatically. To try local changes, build and pack here, then run `pnpm add ../../../Package/amirrrreza1-amotype-0.1.0.tgz` from `Project/apps/playground`. Restore the registry dependency with `pnpm --filter amotype-playground add @amirrrreza1/amotype@0.1.0`.
+The playground installs the local 0.2.0 archive committed under `Project/vendor/`, so it includes array/object checks and still builds independently. After engine changes, run `pnpm run build` and `pnpm pack --pack-destination ../Project/vendor` here, then `pnpm install --force` in Project to refresh its installed archive. This does not publish to npm.
 
 See [the type policy](docs/TYPE_SYSTEM.md) and [the student scope assessment](SCOPE_ASSESSMENT.md).
 
@@ -71,11 +71,26 @@ Exit codes: 0 complete/no errors; 1 errors; 2 usage or I/O failure; 3 partial/no
 
 ## Scope and policy
 
-Supported: primitive values (`number`, `string`, `boolean`, `null`, `undefined`), `unknown`, let/const, blocks, identifier references, simple assignments and updates, common primitive operators, named non-async functions with identifier parameters, primitive JSDoc contracts, and simple returns.
+Supported: homogeneous arrays, fixed object shapes, element/property reads and writes, nested collection JSDoc contracts, primitive values (`number`, `string`, `boolean`, `null`, `undefined`), `unknown`, let/const, blocks, identifier references, simple assignments and updates, common primitive operators, named non-async functions with identifier parameters, primitive and collection JSDoc contracts, and simple returns.
 
 Functions use exact arity as an educational contract. Built-ins include `Number`, `String`, `Boolean`, and `parseFloat`, each with one argument. Unannotated parameters are unknown. Forward calls need an explicit `@returns` annotation for a known result. Mutable captured values are uncertain across calls.
 
-Arrays, objects, properties, destructuring, var, classes, arrow functions, loops, branching, imports, promises, async/generators, and complex JSDoc types are outside this version. Unsupported features generate `I100`; uncertainty generates `I101`. This package does not guarantee full JavaScript soundness or runtime correctness. The parser uses module grammar.
+Array methods, sparse/spread literals, dynamic object keys, destructuring, var, classes, arrow functions, loops, branching, imports, promises, async/generators, unions, and other generic JSDoc types are outside this version. Unsupported features generate `I100`; uncertainty generates `I101`. This package does not guarantee full JavaScript soundness or runtime correctness. The parser uses module grammar.
+
+## Array and object playground examples
+
+Choose **Arrays and objects**, **Array and object mistakes**, or **Collection function contracts** in the playground. Paste-ready programs are in [collections.js](examples/collections.js) and [collection-errors.js](examples/collection-errors.js).
+
+```js
+const scores = [80, 90];
+const student = { name: 'Amo', scores };
+const first = student.scores[0]; // number
+scores[1] = 95;
+scores[0] = 'eighty'; // E403: member expects number
+const missing = student.grade; // E400: missing own property
+```
+
+See [the type policy](docs/TYPE_SYSTEM.md#arrays-and-objects) for bounds, mutation, and unknown-type limits.
 
 ## License
 

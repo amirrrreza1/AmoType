@@ -1,7 +1,7 @@
 import type { Expression, Identifier, Node, Pattern } from 'estree';
 import type { AnalysisContext } from './context.js';
 import type { Binding, Scope } from './scope.js';
-import { sameType, typeName, type Type } from './types.js';
+import { isCollectionType, sameType, typeName, type Type } from './types.js';
 
 function resolveBinding(
   context: AnalysisContext,
@@ -32,7 +32,10 @@ export function readVariable(context: AnalysisContext, scope: Scope, node: Ident
     binding.kind !== 'function';
   if (
     captured &&
-    (binding.kind === 'let' || binding.kind === 'parameter' || !binding.initialized)
+    (binding.kind === 'let' ||
+      binding.kind === 'parameter' ||
+      isCollectionType(binding.type) ||
+      !binding.initialized)
   ) {
     context.uncertain(
       node,
@@ -113,7 +116,8 @@ export function writeVariable(
   }
   // Follow the actual assignment, even when the educational policy warns about it.
   binding.type = value;
-  if (binding.initialType === 'unknown' && value !== 'unknown') binding.initialType = value;
+  if (binding.initialType === 'unknown' && value !== 'unknown')
+    binding.initialType = structuredClone(value);
   context.explain(
     sourceNode,
     'Assignment',

@@ -27,7 +27,7 @@ describe('CLI adapter', () => {
     assert.equal(runCli('let x = 1; x = "text";').status, 0);
   });
   it('uses a distinct exit status for partial analysis', () => {
-    assert.equal(runCli('const values = [1, 2];').status, 3);
+    assert.equal(runCli('const values = [1, "two"];').status, 3);
   });
   it('handles invalid input and missing files', () => {
     assert.equal(runCli('const =').status, 1);

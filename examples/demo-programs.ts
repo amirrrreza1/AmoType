@@ -110,6 +110,65 @@ const result = double(10);`,
     analysisComplete: false,
   },
   {
+    id: 'collections',
+    title: 'Arrays and objects',
+    description: 'Infer nested shapes, read members, and update matching types.',
+    source: `const scores = [80, 90, 100];
+const student = { name: "Amo", scores, active: true };
+
+const firstScore = student.scores[0];
+const count = scores.length;
+const greeting = "Hello, " + student.name;
+
+scores[1] = 95;
+student.active = false;
+
+/** @param {{name: string, scores: number[]}} user @returns {number} */
+function first(user) {
+  return user.scores[0];
+}
+const result = first(student);`,
+    expectedCodes: [],
+    analysisComplete: true,
+  },
+  {
+    id: 'collection-errors',
+    title: 'Array and object mistakes',
+    description: 'Find incompatible writes, a missing property, and an invalid index.',
+    source: `const scores = [80, 90, 100];
+const student = { name: "Amo", active: true };
+
+scores[0] = "eighty";
+student.active = "yes";
+const missing = student.grade;
+const invalidIndex = scores[true];`,
+    expectedCodes: ['E403', 'E403', 'E400', 'E402'],
+    analysisComplete: true,
+  },
+  {
+    id: 'collection-contracts',
+    title: 'Collection function contracts',
+    description: 'Check array arguments, required object properties, and return shapes.',
+    source: `/** @param {number[]} scores @returns {number} */
+function first(scores) {
+  return scores[0];
+}
+const wrongScores = first(["80", "90"]);
+
+/** @param {{name: string, active: boolean}} user @returns {string} */
+function label(user) {
+  return user.name;
+}
+const wrongUser = label({ name: "Amo" });
+
+/** @returns {{total: number}} */
+function summary() {
+  return { total: "100" };
+}`,
+    expectedCodes: ['E302', 'E302', 'E303'],
+    analysisComplete: true,
+  },
+  {
     id: 'unsupported',
     title: 'Outside the subset',
     description: 'Branching is explicitly marked as partial analysis in this first release.',

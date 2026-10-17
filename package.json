@@ -1,6 +1,6 @@
 {
   "name": "@amirrrreza1/amotype",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An educational static type checker for a documented subset of JavaScript.",
   "homepage": "https://github.com/amirrrreza1/LanguageDesign#readme",
   "repository": {
@@ -36,7 +36,9 @@
     "README.md",
     "LICENSE",
     "SCOPE_ASSESSMENT.md",
-    "docs/TYPE_SYSTEM.md"
+    "docs/TYPE_SYSTEM.md",
+    "examples/collections.js",
+    "examples/collection-errors.js"
   ],
   "engines": {
     "node": ">=22"

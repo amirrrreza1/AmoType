@@ -14,7 +14,7 @@ export type {
   TraceStep,
 } from './diagnostics.js';
 export type { SymbolInfo } from './scope.js';
-export type { Type, PrimitiveType, FunctionType } from './types.js';
+export type { Type, PrimitiveType, FunctionType, ArrayType, ObjectType } from './types.js';
 export { typeName } from './types.js';
 
 export interface CheckResult {

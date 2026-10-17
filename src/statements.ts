@@ -4,7 +4,16 @@ import { readFunctionAnnotations } from './annotations.js';
 import type { AnalysisContext } from './context.js';
 import { inferExpressionType } from './expressions.js';
 import type { Scope } from './scope.js';
-import { isFunctionType, sameType, typeName, type FunctionType, type Type } from './types.js';
+import {
+  compatibleType,
+  hasUnknown,
+  isFunctionType,
+  sameType,
+  typeName,
+  type FunctionType,
+  type Type,
+} from './types.js';
+import { invalidateCollections } from './collections.js';
 
 interface FunctionFrame {
   declaredReturn?: Type;
@@ -74,9 +83,9 @@ function checkReturnType(
   actual: Type,
 ): void {
   if (expected === 'unknown') return;
-  if (actual === 'unknown') {
+  if (hasUnknown(actual) && compatibleType(expected, actual)) {
     context.uncertain(node, `Cannot verify this return against ${typeName(expected)}.`);
-  } else if (!sameType(expected, actual)) {
+  } else if (!compatibleType(expected, actual)) {
     context.report(node, {
       code: 'E303',
       severity: 'error',
@@ -186,7 +195,7 @@ export function analyzeStatements(
             : 'undefined';
           binding.type = inferred;
           // An uninitialized let has no strict type commitment until its first assignment.
-          binding.initialType = declaration.init ? inferred : 'unknown';
+          binding.initialType = declaration.init ? structuredClone(inferred) : 'unknown';
           binding.initialized = true;
           context.explain(
             declaration,
@@ -240,6 +249,7 @@ export function analyzeStatements(
         break;
       default:
         context.unsupported(statement);
+        invalidateCollections(context);
         // Skipped control flow might change any visible mutable binding.
         for (let visible: Scope | undefined = scope; visible; visible = visible.parent) {
           for (const binding of visible.bindings.values()) {

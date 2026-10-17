@@ -173,15 +173,13 @@ describe('function contracts', () => {
     assert.deepEqual(result.diagnostics, []);
   });
   it('does not silently accept unsupported or malformed annotations', () => {
-    assert.ok(codes('/** @param {number[]} x */ function f(x) {}').includes('I100'));
+    assert.ok(codes('/** @param {number|string} x */ function f(x) {}').includes('I100'));
     assert.ok(codes('/** @param number x */ function f(x) {}').includes('I100'));
   });
 });
 
 describe('partial analysis and source locations', () => {
   for (const source of [
-    'const x = [1];',
-    'const x = { a: 1 };',
     'const x = () => 1;',
     'while (true) {}',
     'var x = 1;',

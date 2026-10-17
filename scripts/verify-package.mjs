@@ -46,6 +46,11 @@ const installedRoot = resolve(consumer, 'node_modules', ...manifest.name.split('
 const { check } = await import(pathToFileURL(resolve(installedRoot, 'dist', 'index.js')).href);
 const source = 'let age = 20; age = "twenty";';
 assert.equal(check(source).diagnostics[0].code, 'W100');
+const collections = check('const a = [1, 2]; const o = {scores: a}; const n = o.scores[0];');
+assert.equal(collections.analysisComplete, true);
+assert.deepEqual(collections.diagnostics, []);
+assert.equal(collections.symbols.find((symbol) => symbol.name === 'n').type, 'number');
+assert.equal(check('const a = [1]; a[0] = "one";').diagnostics[0].code, 'E403');
 const input = resolve(consumer, 'sample.js');
 writeFileSync(input, source);
 const command = spawnSync(
@@ -60,7 +65,7 @@ assert.equal(command.status, 0, command.stderr);
 assert.equal(JSON.parse(command.stdout).diagnostics[0].code, 'W100');
 writeFileSync(
   resolve(consumer, 'sample.ts'),
-  `import { check, type CheckResult } from '${manifest.name}';\nconst result: CheckResult = check('let count = 1;');\nconsole.log(result.analysisComplete);\n`,
+  `import { check, type CheckResult, type ArrayType, type ObjectType } from '${manifest.name}';\nconst array: ArrayType = { kind: 'array', elementType: 'number' };\nconst object: ObjectType = { kind: 'object', properties: { scores: array } };\nconst result: CheckResult = check('const scores = [1, 2];');\nconsole.log(result.analysisComplete, object);\n`,
 );
 writeFileSync(
   resolve(consumer, 'tsconfig.json'),

@@ -13,7 +13,22 @@ import type { AnalysisContext } from './context.js';
 import type { Scope } from './scope.js';
 import { readVariable, writeVariable } from './bindings.js';
 import { inferBinaryOperator, supportedBinaryOperator } from './operators.js';
-import { isFunctionType, sameType, typeName, type Type } from './types.js';
+import {
+  compatibleType,
+  hasUnknown,
+  isFunctionType,
+  sameType,
+  typeName,
+  type Type,
+} from './types.js';
+import {
+  inferArray,
+  inferObject,
+  readMember,
+  resolveMember,
+  writeMember,
+  invalidateCollections,
+} from './collections.js';
 
 function checkKnownOperands(
   context: AnalysisContext,
@@ -40,6 +55,12 @@ export function inferExpressionType(
       return inferLiteral(context, node);
     case 'Identifier':
       return readVariable(context, scope, node);
+    case 'ArrayExpression':
+      return inferArray(context, scope, node);
+    case 'ObjectExpression':
+      return inferObject(context, scope, node);
+    case 'MemberExpression':
+      return readMember(context, scope, node);
     case 'BinaryExpression':
       return inferBinaryExpression(context, scope, node);
     case 'UnaryExpression':
@@ -54,6 +75,7 @@ export function inferExpressionType(
       return inferCallExpression(context, scope, node);
     default:
       context.unsupported(node);
+      invalidateCollections(context);
       return 'unknown';
   }
 }
@@ -106,6 +128,7 @@ function inferUnaryExpression(
 ): Type {
   if (!['!', '+', '-', '~', 'typeof', 'void'].includes(node.operator)) {
     context.unsupported(node, `Unary operator ${node.operator}`);
+    invalidateCollections(context);
     return 'unknown';
   }
   // typeof an unresolved identifier is valid JavaScript and produces "undefined".
@@ -137,9 +160,14 @@ function inferLogicalExpression(
 ): Type {
   const left = inferExpressionType(context, scope, node.left);
   // The right side might not execute. Analyze it without committing its assignments.
+  const writesBefore = context.collectionWrites;
   const snapshots = context.scopes
     .flatMap((entry) => [...entry.bindings.values()])
-    .map((binding) => ({ binding, type: binding.type, initialType: binding.initialType }));
+    .map((binding) => ({
+      binding,
+      type: structuredClone(binding.type),
+      initialType: structuredClone(binding.initialType),
+    }));
   const right = inferExpressionType(context, scope, node.right);
   for (const snapshot of snapshots) {
     snapshot.binding.initialType = snapshot.initialType;
@@ -150,6 +178,13 @@ function inferLogicalExpression(
         `Short-circuit assignment leaves "${snapshot.binding.name}" with an uncertain type.`,
       );
     }
+  }
+  if (context.collectionWrites !== writesBefore) {
+    invalidateCollections(context);
+    context.uncertain(
+      node,
+      'Short-circuit collection mutation leaves collection types uncertain.',
+    );
   }
   checkKnownOperands(context, node, left, right);
   if (node.operator === '??' && (left === 'null' || left === 'undefined')) return right;
@@ -167,6 +202,21 @@ function inferAssignmentExpression(
   scope: Scope,
   node: AssignmentExpression,
 ): Type {
+  if (node.left.type === 'MemberExpression') {
+    const slot = resolveMember(context, scope, node.left);
+    const right = inferExpressionType(context, scope, node.right);
+    if (node.operator === '=') return writeMember(context, node, slot, right);
+    const operator = node.operator.slice(0, -1);
+    if (!supportedBinaryOperator(operator)) {
+      context.unsupported(node, `Assignment operator ${node.operator}`);
+      invalidateCollections(context);
+      return 'unknown';
+    }
+    checkKnownOperands(context, node, slot.type, right);
+    const result = inferBinaryOperator(operator, slot.type, right);
+    if (result.warning) context.coercion(node, result.warning);
+    return writeMember(context, node, slot, result.type);
+  }
   if (node.operator === '=') {
     const value = inferExpressionType(context, scope, node.right);
     return writeVariable(context, scope, node.left, value, node.right);
@@ -189,6 +239,17 @@ function inferUpdateExpression(
   scope: Scope,
   node: UpdateExpression,
 ): Type {
+  if (node.argument.type === 'MemberExpression') {
+    const slot = resolveMember(context, scope, node.argument);
+    checkKnownOperands(context, node, slot.type);
+    if (slot.type !== 'unknown' && slot.type !== 'number')
+      context.coercion(
+        node,
+        `${node.operator} converts its operand to a number.`,
+        typeName(slot.type),
+      );
+    return writeMember(context, node, slot, slot.type === 'unknown' ? 'unknown' : 'number');
+  }
   if (node.argument.type !== 'Identifier') {
     context.unsupported(node);
     return 'unknown';
@@ -259,19 +320,19 @@ function inferCallExpression(
   argumentsWithTypes.forEach((argument, index) => {
     const parameter = callee.parameters[index];
     if (!parameter || parameter.type === 'unknown') return;
-    if (argument.type === 'unknown') {
+    if (hasUnknown(argument.type) && compatibleType(parameter.type, argument.type)) {
       context.uncertain(
         argument.node,
-        `Cannot verify argument "${parameter.name}" against ${parameter.type}.`,
+        `Cannot verify argument "${parameter.name}" against ${typeName(parameter.type)}.`,
       );
-    } else if (!sameType(parameter.type, argument.type)) {
+    } else if (!compatibleType(parameter.type, argument.type)) {
       context.report(argument.node, {
         code: 'E302',
         severity: 'error',
-        message: `Argument "${parameter.name}" expects ${parameter.type}, received ${typeName(argument.type)}.`,
-        expected: parameter.type,
+        message: `Argument "${parameter.name}" expects ${typeName(parameter.type)}, received ${typeName(argument.type)}.`,
+        expected: typeName(parameter.type),
         actual: typeName(argument.type),
-        suggestion: `Pass a ${parameter.type} value or correct the JSDoc signature.`,
+        suggestion: `Pass a ${typeName(parameter.type)} value or correct the JSDoc signature.`,
       });
     }
   });
